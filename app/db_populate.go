@@ -155,6 +155,9 @@ func main() {
 		}
 		row := ParseLine(line)
 		passenger := NewPassengerFromRow(row)
+		if passenger.TripCategory == 0 {
+			continue
+		}
 		passengers = append(passengers, passenger)
 
 		if len(passengers) == bufferSize {
@@ -165,13 +168,8 @@ func main() {
 			fmt.Printf("\rProcessed %d", processed)
 			passengers = []*Passenger{}
 		}
-		if passenger.TripCategory == 0 {
-			continue
-		}
+
 		taxis, potentialTaxis = handlePassenger(db, taxis, potentialTaxis, passenger, 5)
-		if processed == 10000 {
-			break
-		}
 	}
 
 	if len(potentialTaxis) > 0 {
