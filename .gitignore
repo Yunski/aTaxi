@@ -12,3 +12,6 @@
 
 # data
 data/
+
+# config
+config.json
