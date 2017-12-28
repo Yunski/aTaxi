@@ -39,25 +39,25 @@ type Row struct {
 }
 
 func ParseLine(line []string) Row {
-	personID, _ := strconv.ParseInt(line[PersonID], 0, 32)
+	personID, _ := strconv.ParseInt(line[PersonID], 10, 64)
 	oType := byte(line[OType][0])
 	oName := line[OName]
-	oFIPS, _ := strconv.ParseUint(line[OFIPS], 0, 32)
+	oFIPS, _ := strconv.ParseUint(line[OFIPS], 10, 32)
 	oLon, _ := strconv.ParseFloat(line[OLon], 64)
 	oLat, _ := strconv.ParseFloat(line[OLat], 64)
-	oX, _ := strconv.ParseInt(line[OXCoord], 0, 32)
-	oY, _ := strconv.ParseInt(line[OYCoord], 0, 32)
-	oDepartureTime, _ := strconv.ParseUint(line[ODepartureTime], 0, 32)
+	oX, _ := strconv.ParseInt(line[OXCoord], 10, 32)
+	oY, _ := strconv.ParseInt(line[OYCoord], 10, 32)
+	oDepartureTime, _ := strconv.ParseUint(line[ODepartureTime], 10, 32)
 	dType := byte(line[DType][0])
 	dName := line[DName]
-	dFIPS, _ := strconv.ParseUint(line[DFIPS], 0, 32)
+	dFIPS, _ := strconv.ParseUint(line[DFIPS], 10, 32)
 	dLon, _ := strconv.ParseFloat(line[DLon], 64)
 	dLat, _ := strconv.ParseFloat(line[DLat], 64)
-	dX, _ := strconv.ParseInt(line[DXCoord], 0, 32)
-	dY, _ := strconv.ParseInt(line[DYCoord], 0, 32)
+	dX, _ := strconv.ParseInt(line[DXCoord], 10, 32)
+	dY, _ := strconv.ParseInt(line[DYCoord], 10, 32)
 
 	return Row{
-		PersonID:       int64(personID),
+		PersonID:       personID,
 		OType:          oType,
 		OName:          oName,
 		OFIPS:          uint32(oFIPS),

@@ -1,50 +1,45 @@
 package ataxi
 
 import (
-	"fmt"
 	"math"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	geo "github.com/kellydunn/golang-geo"
 )
 
-type Model struct {
-	ID        uint `gorm:"primary_key"`
-	CreatedAt time.Time
-}
-
 type Passenger struct {
-	gorm.Model
+	ID               uint `gorm:"primary_key"`
+	CreatedAt        time.Time
 	PersonID         int64
-	OType            byte   `sql:"size:1"`
+	OType            byte   `gorm:"index";sql:"size:1"`
 	OName            string `sql:"size:255"`
-	OFIPS            uint32
+	OFIPS            uint32 `gorm:"column:o_fips"`
 	OX               int32
 	OY               int32
 	OLat             float64
 	OLon             float64
-	DType            byte   `sql:"size:1"`
+	DType            byte   `gorm:"index";sql:"size:1"`
 	DName            string `sql:"size:255"`
-	DFIPS            uint32
-	DX               int32
-	DY               int32
+	DFIPS            uint32 `gorm:"column:d_fips"`
+	DX               int32  `gorm:"index"`
+	DY               int32  `gorm:"index"`
 	DLat             float64
 	DLon             float64
-	DepartureTime    uint32
-	TripCategory     uint32
+	DepartureTime    uint32 `gorm:"index"`
+	TripCategory     uint32 `gorm:"index"`
 	TripDistance     float64
-	LatestPickUpTime uint32
+	LatestPickUpTime uint32 `gorm:"index"`
 	DXSuper          int32
 	DYSuper          int32
-	Taxi             *Taxi
+	TaxiID           uint
 }
 
-func NewPassenger(personID int64, oType byte, oName string, oFIPS uint32,
+func NewPassenger(id uint, personID int64, oType byte, oName string, oFIPS uint32,
 	oX int32, oY int32, oLat float64, oLon float64, dType byte, dName string, dFIPS uint32,
 	dX int32, dY int32, dLat float64, dLon float64, departureTime uint32, tripCategory uint32,
 	tripDistance float64, dXSuper int32, dYSuper int32) *Passenger {
 	passenger := &Passenger{
+		ID:               id,
 		PersonID:         personID,
 		OType:            oType,
 		OName:            oName,
@@ -70,19 +65,19 @@ func NewPassenger(personID int64, oType byte, oName string, oFIPS uint32,
 	return passenger
 }
 
-func NewPassengerFromRow(row Row) *Passenger {
+func NewPassengerFromRow(id uint, row Row) *Passenger {
 	tripDistance := GetTripDistance(geo.NewPoint(row.OLat, row.OLon),
 		geo.NewPoint(row.DLat, row.DLon))
 	tripCategory := GetTripCategory(tripDistance)
 	dXSuper, dYSuper := GetSuperPixel(row.DXCoord, row.DYCoord, tripCategory)
 
-	return NewPassenger(row.PersonID, row.OType, row.OName, row.OFIPS,
+	return NewPassenger(id, row.PersonID, row.OType, row.OName, row.OFIPS,
 		row.OXCoord, row.OYCoord, row.OLat, row.OLon, row.DType, row.DName,
 		row.DFIPS, row.DXCoord, row.DYCoord, row.DLat, row.DLon,
 		row.ODepartureTime, tripCategory, tripDistance, dXSuper, dYSuper)
 }
 
-func (passenger *Passenger) AssignedTaxi(taxis []*Taxi) (*Taxi, bool) {
+func (passenger *Passenger) FindTaxi(taxis []*Taxi) (*Taxi, bool) {
 	if len(taxis) == 0 || (passenger.OX != taxis[0].OX || passenger.OY != taxis[0].OY) {
 		return nil, true
 	}
@@ -103,26 +98,31 @@ func (passenger *Passenger) DistanceTo(latlon *geo.Point) float64 {
 }
 
 type Taxi struct {
-	gorm.Model
-	OFIPS         uint32
-	DFIPS         uint32
-	OX            int32
-	OY            int32
+	ID            uint `gorm:"primary_key"`
+	CreatedAt     time.Time
+	OFIPS         uint32 `gorm:"column:o_fips"`
+	DFIPS         uint32 `gorm:"column:d_fips"`
+	OX            int32  `gorm:"index"`
+	OY            int32  `gorm:"index"`
 	OLat          float64
 	OLon          float64
-	DX            int32
-	DY            int32
+	DX            int32 `gorm:"index"`
+	DY            int32 `gorm:"index"`
 	DLat          float64
 	DLon          float64
-	Passengers    []*Passenger
-	DepartureTime uint32
+	Passengers    []Passenger
+	DepartureTime uint32 `gorm:"index"`
 	MaxOccupancy  uint32
-	DXSuper       int32
-	DYSuper       int32
+	NumPassengers uint32
+	PMT           float64 `gorm:"column:pmt"`
+	VMT           float64 `gorm:"column:vmt"`
+	DXSuper       int32   `gorm:"index"`
+	DYSuper       int32   `gorm:"index"`
 }
 
-func NewTaxi(passenger *Passenger, maxOccupancy uint32) *Taxi {
+func NewTaxi(id uint, passenger *Passenger, maxOccupancy uint32) *Taxi {
 	taxi := &Taxi{
+		ID:            id,
 		OFIPS:         passenger.OFIPS,
 		DFIPS:         passenger.DFIPS,
 		OX:            passenger.OX,
@@ -133,9 +133,10 @@ func NewTaxi(passenger *Passenger, maxOccupancy uint32) *Taxi {
 		DY:            passenger.DY,
 		DLat:          passenger.DLat,
 		DLon:          passenger.DLon,
-		Passengers:    []*Passenger{passenger},
+		Passengers:    []Passenger{*passenger},
 		DepartureTime: passenger.LatestPickUpTime,
 		MaxOccupancy:  maxOccupancy,
+		NumPassengers: 1,
 		DXSuper:       passenger.DXSuper,
 		DYSuper:       passenger.DYSuper,
 	}
@@ -146,15 +147,16 @@ func (taxi *Taxi) HasDeparted(time uint32) bool {
 	return taxi.DepartureTime <= time
 }
 
-func (taxi *Taxi) NumPassengers() uint32 {
-	return uint32(len(taxi.Passengers))
+func (taxi *Taxi) AddPassenger(passenger *Passenger) {
+	taxi.Passengers = append(taxi.Passengers, *passenger)
+	taxi.NumPassengers++
 }
 
 func (taxi *Taxi) IsFull() bool {
-	return taxi.NumPassengers() == taxi.MaxOccupancy
+	return taxi.NumPassengers == taxi.MaxOccupancy
 }
 
-func (taxi *Taxi) VehicleTripMiles() float64 {
+func (taxi *Taxi) VehicleMilesTraveled() float64 {
 	curLatLon := geo.NewPoint(taxi.OLat, taxi.OLon)
 	passengers := taxi.Passengers
 	var vtm float64
@@ -179,7 +181,7 @@ func (taxi *Taxi) VehicleTripMiles() float64 {
 			vtm += nearestDist
 			curLatLon = geo.NewPoint(passengers[nearestIdx].DLat,
 				passengers[nearestIdx].DLon)
-			remaining := []*Passenger{}
+			var remaining []Passenger
 			for i, passenger := range passengers {
 				if i != nearestIdx {
 					remaining = append(remaining, passenger)
@@ -191,22 +193,10 @@ func (taxi *Taxi) VehicleTripMiles() float64 {
 	return vtm
 }
 
-func (taxi *Taxi) PassengerTripMiles() float64 {
+func (taxi *Taxi) PersonMilesTraveled() float64 {
 	var ptm float64
 	for _, passenger := range taxi.Passengers {
 		ptm += passenger.TripDistance
 	}
 	return ptm
-}
-
-func (taxi *Taxi) String() string {
-	return fmt.Sprintf("ID: %d DepartureTime: %d NumPassengers: %d VO: %f Passenger 1 DepartureTime: %d, OCoord: %s, DSuper: %s",
-		taxi.ID,
-		taxi.DepartureTime,
-		taxi.NumPassengers(),
-		taxi.PassengerTripMiles()/taxi.VehicleTripMiles(),
-		taxi.Passengers[0].DepartureTime,
-		fmt.Sprintf("(%d, %d)", taxi.OX, taxi.OY),
-		fmt.Sprintf("(%d, %d)", taxi.DXSuper, taxi.DYSuper),
-	)
 }
