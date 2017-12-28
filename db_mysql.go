@@ -71,16 +71,10 @@ func (db *mysqlDB) ListTaxisByNumPassengers(limit int, withPassengers bool) ([]T
 // GetTaxi retrieves a taxi by its ID.
 func (db *mysqlDB) GetTaxi(id uint) (*Taxi, error) {
 	var taxi Taxi
-	db.conn.First(&taxi, id)
+	db.conn.Preload("Passengers").First(&taxi, id)
 	if taxi.ID == 0 {
 		return nil, fmt.Errorf("mysql: could not find taxi with id %d", id)
 	}
-	var passengers []Passenger
-	db.conn.Model(&taxi).Related(&passengers)
-	if len(passengers) == 0 {
-		return nil, fmt.Errorf("mysql: could not retrieve passengers for taxi with id %d", id)
-	}
-	taxi.Passengers = passengers
 	return &taxi, nil
 }
 
@@ -102,16 +96,6 @@ func (db *mysqlDB) GetPassenger(id uint) (*Passenger, error) {
 		return nil, fmt.Errorf("mysql: could not find passenger with id %d", id)
 	}
 	return &passenger, nil
-}
-
-// ListPassengersForTaxi returns a list of passengers for a given taxi, ordered by departure time.
-func (db *mysqlDB) ListPassengersForTaxi(t *Taxi) ([]Passenger, error) {
-	var passengers []Passenger
-	db.conn.Model(t).Related(&passengers)
-	if len(passengers) == 0 {
-		return nil, fmt.Errorf("mysql: could not find passengers for taxi with id %d", t.ID)
-	}
-	return passengers, nil
 }
 
 // Close closes the database, freeing up any available resources.

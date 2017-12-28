@@ -43,10 +43,6 @@ type RideSharingDatabase interface {
 	// GetPassenger retrieves a passenger by its ID.
 	GetPassenger(id uint) (*Passenger, error)
 
-	// ListPassengersForTaxi returns a list of passengers for a given taxi, ordered by departure time.
-	ListPassengersForTaxi(t *Taxi) ([]Passenger, error)
-
 	// Close closes the database, freeing up any available resources.
-	// TODO(cbro): Close() should return an error.
 	Close()
 }

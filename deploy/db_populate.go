@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -54,6 +55,10 @@ func handlePassenger(db *gorm.DB, taxis []*Taxi, potentialTaxis []*Taxi,
 }
 
 func main() {
+	if len(os.Args) != 2 {
+		log.Fatal(errors.New("You must provide a csv file."))
+		os.Exit(1)
+	}
 	start := time.Now()
 
 	raw, err := ioutil.ReadFile("../config.json")
@@ -74,7 +79,8 @@ func main() {
 	db.DropTable(&Passenger{}, &Taxi{})
 	db.AutoMigrate(&Passenger{}, &Taxi{})
 
-	csvFile, _ := os.Open("../data/san_mateo_trips.csv")
+	csvFileName := os.Args[1]
+	csvFile, _ := os.Open(fmt.Sprintf("../data/%s", csvFileName))
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 
 	fmt.Println("Reading trip csv...")
