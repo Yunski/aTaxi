@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+
+	. "github.com/webapps/ataxi"
 )
 
 // parseTemplate applies a given file to the body of the base template.
@@ -32,11 +34,12 @@ type appTemplate struct {
 // information to the base template.
 func (tmpl *appTemplate) Execute(w http.ResponseWriter, r *http.Request, data interface{}) *appError {
 	d := struct {
-		Data interface{}
+		Config AppConfig
+		Data   interface{}
 	}{
-		Data: data,
+		Data:   data,
+		Config: Config,
 	}
-
 	if err := tmpl.t.Execute(w, d); err != nil {
 		return appErrorf(err, "could not write template: %v")
 	}

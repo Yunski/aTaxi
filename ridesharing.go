@@ -1,24 +1,14 @@
 package ataxi
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"os"
 )
 
 var DB RideSharingDatabase
 
 func init() {
-	raw, err := ioutil.ReadFile("../config.json")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-	var config Config
-	json.Unmarshal(raw, &config)
-
-	DB, err = newMySQLDB(config)
+	var err error
+	DB, err = newMySQLDB(Config)
 	if err != nil {
 		log.Fatal(err)
 	}

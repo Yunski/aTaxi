@@ -11,7 +11,7 @@ This project establishes a computational framework to assess the ride-sharing op
 ## Setup
 ### Config
 Create a json "config.json" in the project root directory.
-Project structure should look like 
+Project structure should look like
 ```
 app/
 config.json
@@ -22,13 +22,14 @@ Paste the following in "config.json", and edit the field values accordingly.
 {
     "username": "root",
     "password": "password",
-    "database": "database_name"
+    "database": "database_name",
+    "google_maps_api_key": "your_api_key"
 }
 ```
 
 ### Data
 Create a directory "data/" in the project root directory.
-Project structure should look like 
+Project structure should look like
 ```
 app/
 data/
@@ -55,7 +56,7 @@ go get github.com/jinzhu/gorm
 ## Start server
 ```bash
 cd app/
-go run app.go
+go run *.go
 ```
 Server will be listening at localhost:8080.
 

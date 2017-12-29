@@ -14,7 +14,7 @@ type mysqlDB struct {
 
 var _ RideSharingDatabase = &mysqlDB{}
 
-func newMySQLDB(config Config) (RideSharingDatabase, error) {
+func newMySQLDB(config AppConfig) (RideSharingDatabase, error) {
 	conn, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local", config.Username, config.Password, config.Database))
 	if err != nil {
 		return nil, fmt.Errorf("mysql: could not get a connection: %v", err)

@@ -3,11 +3,9 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -16,10 +14,6 @@ import (
 	"github.com/jinzhu/gorm"
 	. "github.com/webapps/ataxi"
 )
-
-const bufferSize = 500
-const batchSize = 50
-const numGoRoutines = 100
 
 func handlePassenger(db *gorm.DB, taxis []*Taxi, potentialTaxis []*Taxi,
 	passenger *Passenger, maxOccupancy uint32) ([]*Taxi, []*Taxi) {
@@ -61,15 +55,7 @@ func main() {
 	}
 	start := time.Now()
 
-	raw, err := ioutil.ReadFile("../config.json")
-	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
-	}
-	var config Config
-	json.Unmarshal(raw, &config)
-
-	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local", config.Username, config.Password, config.Database))
+	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local", Config.Username, Config.Password, Config.Database))
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)

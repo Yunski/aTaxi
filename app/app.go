@@ -13,10 +13,15 @@ import (
 	"github.com/webapps/ataxi"
 )
 
+var (
+	mapTmpl = parseTemplate("map.html")
+)
+
 func main() {
 	r := mux.NewRouter()
 	r.Methods("GET").Path("/").Handler(appHandler(homeHandler))
 	r.Methods("GET").Path("/api/taxis").Handler(appHandler(listTaxiHandler))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
 	http.Handle("/", handlers.CombinedLoggingHandler(os.Stderr, r))
 	fmt.Println("Listening at localhost:8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -24,8 +29,7 @@ func main() {
 
 // homeHandler displays the home page.
 func homeHandler(w http.ResponseWriter, r *http.Request) *appError {
-	w.Write([]byte("hello world"))
-	return nil
+	return mapTmpl.Execute(w, r, nil)
 }
 
 // listTaxiHandler returns a json list of taxis sorted by request field.
