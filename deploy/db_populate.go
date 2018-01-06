@@ -62,7 +62,7 @@ func main() {
 	}
 	defer db.Close()
 
-	db.DropTable(&Passenger{}, &Taxi{})
+	db.DropTableIfExists(&Passenger{}, &Taxi{})
 	db.AutoMigrate(&Passenger{}, &Taxi{})
 
 	csvFileName := os.Args[1]
