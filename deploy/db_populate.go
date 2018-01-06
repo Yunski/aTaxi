@@ -88,9 +88,6 @@ func main() {
 		id++
 
 		taxis, potentialTaxis = handlePassenger(db, taxis, potentialTaxis, passenger, 5)
-		if id == 10000 {
-			break
-		}
 	}
 
 	fmt.Printf("Num of Taxis needed: %d\n", len(taxis))
