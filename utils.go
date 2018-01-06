@@ -1,19 +1,35 @@
 package ataxi
 
 import (
-	"math"
-
 	geo "github.com/kellydunn/golang-geo"
 )
 
 func GetSuperPixel(x int32, y int32, category uint32) (int32, int32) {
-	X := mapToSuperCoord(x, category)
-	Y := mapToSuperCoord(y, category)
+	var n int32
+	switch category {
+	case 0:
+		n = 2
+	case 1:
+		n = 2
+	case 2:
+		n = 3
+	case 3:
+		n = 5
+	case 4:
+		n = 10
+	default:
+		panic("Unexpected trip category")
+	}
+	X := mapToSuperCoord(x, n)
+	Y := mapToSuperCoord(y, n)
 	return X, Y
 }
 
-func mapToSuperCoord(x int32, category uint32) int32 {
-	return sign(x)*(2*int32(category)+1)*int32(math.Floor(math.Abs(float64(x))/float64(2*int32(category)+1))) + 2
+func mapToSuperCoord(x int32, n int32) int32 {
+	if x < 0 {
+		return -1 + ((x+1)/n)*n
+	}
+	return (x / n) * n
 }
 
 func sign(x int32) int32 {
@@ -54,4 +70,20 @@ func GetTripCategory(gcDist float64) uint32 {
 		return 3
 	}
 	return 4
+}
+
+func HashCode(x int32, y int32) int32 {
+	x = bijection(x)
+	y = bijection(y)
+	if x >= y {
+		return x*x + x + y
+	}
+	return x + y*y
+}
+
+func bijection(x int32) int32 {
+	if x < 0 {
+		return -x*2 - 1
+	}
+	return x * 2
 }

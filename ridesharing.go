@@ -33,6 +33,18 @@ type RideSharingDatabase interface {
 	// GetPassenger retrieves a passenger by its ID.
 	GetPassenger(id uint) (*Passenger, error)
 
+	// GetDemandForPixels returns the supply of taxis for each pixel
+	GetDemandForPixels(size int) ([]SuperPixelDemand, error)
+
+	// GetSupplyForPixels returns the supply of taxis for each pixel
+	GetSupplyForPixels(size int) ([]SuperPixelSupply, error)
+
+	// GetNumTripsForCategory returns the number of trips for a given trip category
+	GetNumTripsForCategory(category int) (int, error)
+
+	// GetCumulativeNumTripsForCategory returns the cumulative number of trips for trip categories <= category
+	GetCumulativeNumTripsForCategory(category int) (int, error)
+
 	// Close closes the database, freeing up any available resources.
 	Close()
 }

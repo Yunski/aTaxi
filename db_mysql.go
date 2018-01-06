@@ -98,6 +98,38 @@ func (db *mysqlDB) GetPassenger(id uint) (*Passenger, error) {
 	return &passenger, nil
 }
 
+// GetDemandForPixels returns the supply of taxis for each pixel
+func (db *mysqlDB) GetDemandForPixels(size int) ([]SuperPixelDemand, error) {
+	if size != 1 && size != 5 && size != 10 {
+		return nil, fmt.Errorf("Superpixel of dimension %dx%d is not supported", size)
+	}
+	var results []SuperPixelDemand
+	db.conn.Raw("select count(*) as c, ox, oy from taxis group by ox, oy").Scan(&results)
+	return results, nil
+}
+
+// GetSupplyForPixels returns the supply of taxis for each pixel
+func (db *mysqlDB) GetSupplyForPixels(size int) ([]SuperPixelSupply, error) {
+	if size != 1 && size != 5 && size != 10 {
+		return nil, fmt.Errorf("Superpixel of dimension %dx%d is not supported", size)
+	}
+	var results []SuperPixelSupply
+	db.conn.Raw("select count(*) as c, dx_super, dy_super from taxis group by dx_super, dy_super").Scan(&results)
+	return results, nil
+}
+
+func (db *mysqlDB) GetNumTripsForCategory(category int) (int, error) {
+	var numTrips int
+	db.conn.Model(&Passenger{}).Where("trip_category = ?", category).Count(&numTrips)
+	return numTrips, nil
+}
+
+func (db *mysqlDB) GetCumulativeNumTripsForCategory(category int) (int, error) {
+	var numTrips int
+	db.conn.Model(&Passenger{}).Where("trip_category <= ?", category).Count(&numTrips)
+	return numTrips, nil
+}
+
 // Close closes the database, freeing up any available resources.
 func (db *mysqlDB) Close() {
 	db.conn.Close()

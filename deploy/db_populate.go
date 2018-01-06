@@ -93,7 +93,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Num of Taxis: %d\n", len(taxis))
+	fmt.Printf("Num of Taxis needed: %d\n", len(taxis))
 
 	var pmt float64
 	var vmt float64
