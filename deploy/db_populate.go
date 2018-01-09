@@ -18,7 +18,6 @@ import (
 func handlePassenger(db *gorm.DB, taxis []*ataxi.Taxi, potentialTaxis []*ataxi.Taxi,
 	passenger *ataxi.Passenger, maxOccupancy uint32) ([]*ataxi.Taxi, []*ataxi.Taxi) {
 	var availableTaxis []*ataxi.Taxi
-	var departedTaxis []*ataxi.Taxi
 	for _, taxi := range potentialTaxis {
 		if !taxi.HasDeparted(passenger.DepartureTime) && !taxi.IsFull() {
 			availableTaxis = append(availableTaxis, taxi)
@@ -28,7 +27,6 @@ func handlePassenger(db *gorm.DB, taxis []*ataxi.Taxi, potentialTaxis []*ataxi.T
 			}
 			taxi.PMT = taxi.PersonMilesTraveled()
 			taxi.VMT = taxi.VehicleMilesTraveled()
-			departedTaxis = append(departedTaxis, taxi)
 		}
 	}
 
@@ -38,6 +36,10 @@ func handlePassenger(db *gorm.DB, taxis []*ataxi.Taxi, potentialTaxis []*ataxi.T
 		taxi = ataxi.NewTaxi(uint(len(taxis)+1), passenger, maxOccupancy)
 		taxis = append(taxis, taxi)
 		if newTaxiStand {
+            for _, taxi := range potentialTaxis {
+                taxi.PMT = taxi.PersonMilesTraveled()
+                taxi.VMT = taxi.VehicleMilesTraveled()
+            }
 			potentialTaxis = []*ataxi.Taxi{taxi}
 		} else {
 			potentialTaxis = append(potentialTaxis, taxi)
@@ -90,6 +92,10 @@ func main() {
 
 		taxis, potentialTaxis = handlePassenger(db, taxis, potentialTaxis, passenger, 5)
 	}
+    for _, taxi := range potentialTaxis {
+        taxi.PMT = taxi.PersonMilesTraveled()
+        taxi.VMT = taxi.VehicleMilesTraveled()
+    }
 
 	fmt.Printf("Num of Taxis needed: %d\n", len(taxis))
 	elapsed := time.Since(start)

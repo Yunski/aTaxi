@@ -20,7 +20,6 @@ import (
 func handlePassenger(taxis []*ataxi.Taxi, potentialTaxis []*ataxi.Taxi,
 	passenger *ataxi.Passenger, maxOccupancy uint32) ([]*ataxi.Taxi, []*ataxi.Taxi) {
 	var availableTaxis []*ataxi.Taxi
-	var departedTaxis []*ataxi.Taxi
 	for _, taxi := range potentialTaxis {
 		if !taxi.HasDeparted(passenger.DepartureTime) && !taxi.IsFull() {
 			availableTaxis = append(availableTaxis, taxi)
@@ -30,7 +29,6 @@ func handlePassenger(taxis []*ataxi.Taxi, potentialTaxis []*ataxi.Taxi,
 			}
 			taxi.PMT = taxi.PersonMilesTraveled()
 			taxi.VMT = taxi.VehicleMilesTraveled()
-			departedTaxis = append(departedTaxis, taxi)
 		}
 	}
 
@@ -40,6 +38,10 @@ func handlePassenger(taxis []*ataxi.Taxi, potentialTaxis []*ataxi.Taxi,
 		taxi = ataxi.NewTaxi(uint(len(taxis)+1), passenger, maxOccupancy)
 		taxis = append(taxis, taxi)
 		if newTaxiStand {
+            for _, taxi := range potentialTaxis {
+                taxi.PMT = taxi.PersonMilesTraveled()
+                taxi.VMT = taxi.VehicleMilesTraveled()
+            }
 			potentialTaxis = []*ataxi.Taxi{taxi}
 		} else {
 			potentialTaxis = append(potentialTaxis, taxi)
@@ -150,14 +152,18 @@ func main() {
 
 			countyTaxis, potentialTaxis = handlePassenger(countyTaxis, potentialTaxis, passenger, 5)
 		}
-		pmt, vmt := getMT(countyTaxis)
+	    for _, taxi := range potentialTaxis {
+            taxi.PMT = taxi.PersonMilesTraveled()
+			taxi.VMT = taxi.VehicleMilesTraveled()
+		}
+	    pmt, vmt := getMT(countyTaxis)
 		countyRow[0] = strconv.Itoa(int(countyTaxis[0].OFIPS))
 		countyRow[1] = strconv.FormatFloat(pmt/vmt, 'f', 2, 64)
 		countyWriter.Write(countyRow[:])
 		fmt.Printf("county avo: %s\n", countyRow[1])
 
 		for _, taxi := range countyTaxis {
-			tripRow[0] = strconv.Itoa(int(taxi.OX))
+            tripRow[0] = strconv.Itoa(int(taxi.OX))
 			tripRow[1] = strconv.Itoa(int(taxi.OY))
 			tripRow[2] = strconv.Itoa(int(taxi.DepartureTime) % 86400)
 			tripRow[3] = strconv.Itoa(int(taxi.DX))
