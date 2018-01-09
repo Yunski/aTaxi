@@ -12,13 +12,13 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	. "github.com/webapps/ataxi"
+	"github.com/webapps/ataxi"
 )
 
-func handlePassenger(db *gorm.DB, taxis []*Taxi, potentialTaxis []*Taxi,
-	passenger *Passenger, maxOccupancy uint32) ([]*Taxi, []*Taxi) {
-	var availableTaxis []*Taxi
-	var departedTaxis []*Taxi
+func handlePassenger(db *gorm.DB, taxis []*ataxi.Taxi, potentialTaxis []*ataxi.Taxi,
+	passenger *ataxi.Passenger, maxOccupancy uint32) ([]*ataxi.Taxi, []*ataxi.Taxi) {
+	var availableTaxis []*ataxi.Taxi
+	var departedTaxis []*ataxi.Taxi
 	for _, taxi := range potentialTaxis {
 		if !taxi.HasDeparted(passenger.DepartureTime) && !taxi.IsFull() {
 			availableTaxis = append(availableTaxis, taxi)
@@ -35,10 +35,10 @@ func handlePassenger(db *gorm.DB, taxis []*Taxi, potentialTaxis []*Taxi,
 	potentialTaxis = availableTaxis
 	taxi, newTaxiStand := passenger.FindTaxi(potentialTaxis)
 	if taxi == nil {
-		taxi = NewTaxi(uint(len(taxis)+1), passenger, maxOccupancy)
+		taxi = ataxi.NewTaxi(uint(len(taxis)+1), passenger, maxOccupancy)
 		taxis = append(taxis, taxi)
 		if newTaxiStand {
-			potentialTaxis = []*Taxi{taxi}
+			potentialTaxis = []*ataxi.Taxi{taxi}
 		} else {
 			potentialTaxis = append(potentialTaxis, taxi)
 		}
@@ -53,25 +53,26 @@ func main() {
 		log.Fatal(errors.New("You must provide a csv file."))
 		os.Exit(1)
 	}
-	start := time.Now()
 
-	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local", Config.Username, Config.Password, Config.Database))
+	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local", ataxi.Config.Username, ataxi.Config.Password, ataxi.Config.Database))
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	db.DropTableIfExists(&Passenger{}, &Taxi{})
-	db.AutoMigrate(&Passenger{}, &Taxi{})
+	if !db.HasTable(&ataxi.Passenger{}) && !db.HasTable(&ataxi.Taxi{}) {
+		db.AutoMigrate(&ataxi.Passenger{}, &ataxi.Taxi{})
+	}
 
 	csvFileName := os.Args[1]
 	csvFile, _ := os.Open(fmt.Sprintf("../data/%s", csvFileName))
 	reader := csv.NewReader(bufio.NewReader(csvFile))
 
+	start := time.Now()
 	fmt.Println("Reading trip csv...")
-	var taxis []*Taxi
-	var potentialTaxis []*Taxi
+	var taxis []*ataxi.Taxi
+	var potentialTaxis []*ataxi.Taxi
 	var id uint
 	for {
 		line, err := reader.Read()
@@ -80,8 +81,8 @@ func main() {
 		} else if err != nil {
 			log.Fatal(err)
 		}
-		row := ParseLine(line)
-		passenger := NewPassengerFromRow(id+1, row)
+		row := ataxi.ParseLine(line)
+		passenger := ataxi.NewPassengerFromRow(id+1, row)
 		if passenger.TripCategory == 0 {
 			continue
 		}
@@ -91,7 +92,9 @@ func main() {
 	}
 
 	fmt.Printf("Num of Taxis needed: %d\n", len(taxis))
-
+	elapsed := time.Since(start)
+	fmt.Printf("csv processing took %s\n", elapsed)
+	start = time.Now()
 	var pmt float64
 	var vmt float64
 	var numPassengers uint32
@@ -100,12 +103,14 @@ func main() {
 		pmt += taxi.PMT
 		vmt += taxi.VMT
 		numPassengers += taxi.NumPassengers
-		fmt.Printf("\rProcessed %d taxi(s)", i)
+		if i%10000 == 0 {
+			fmt.Printf("\rProcessed %d taxi(s)", i)
+		}
 	}
 	fmt.Println()
 	fmt.Printf("\rFinished processing %d taxi(s)\n", len(taxis))
 	fmt.Printf("Capacity ratio: %f\n", float64(numPassengers)/float64(len(taxis)))
 	fmt.Printf("AVO: %f\n", pmt/vmt)
-	elapsed := time.Since(start)
+	elapsed = time.Since(start)
 	fmt.Printf("AVO analysis took %s\n", elapsed)
 }

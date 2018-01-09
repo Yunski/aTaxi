@@ -1,18 +1,20 @@
 package ataxi
 
+/*
 import (
 	"log"
-)
+)*/
 
 var DB RideSharingDatabase
 
+/*
 func init() {
 	var err error
 	DB, err = newMySQLDB(Config)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
+}*/
 
 type RideSharingDatabase interface {
 	// ListTaxis returns a list of taxis, ordered by field.
