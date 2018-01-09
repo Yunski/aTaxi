@@ -159,7 +159,7 @@ func main() {
 		for _, taxi := range countyTaxis {
 			tripRow[0] = strconv.Itoa(int(taxi.OX))
 			tripRow[1] = strconv.Itoa(int(taxi.OY))
-			tripRow[2] = strconv.Itoa(int(taxi.DepartureTime))
+			tripRow[2] = strconv.Itoa(int(taxi.DepartureTime) % 86400)
 			tripRow[3] = strconv.Itoa(int(taxi.DX))
 			tripRow[4] = strconv.Itoa(int(taxi.DY))
 			tripRow[5] = strconv.Itoa((int(taxi.DepartureTime) + int(math.Ceil(taxi.VMT/30*3600))) % 86400)

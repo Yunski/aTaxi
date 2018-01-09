@@ -107,9 +107,11 @@ func main() {
 		process(int32(DXSuper10), int32(DYSuper10), netTaxis10x10, true)
 		counter++
 		if counter%10000 == 0 {
-			fmt.Printf("Processed %d records\n", counter)
+			fmt.Printf("\rProcessed %d records", counter)
 		}
 	}
+
+    fmt.Println()
 
 	var row [3]string
 	for _, spd := range netTaxis1x1 {
