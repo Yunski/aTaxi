@@ -72,6 +72,25 @@ func GetTripCategory(gcDist float64) uint32 {
 	return 4
 }
 
+func GetTimeCategory(seconds int) int {
+    if seconds < 6 * 3600 {
+        return 0
+    } else if seconds < 9 * 3600 {
+        return 1
+    } else if seconds < 12 * 3600 {
+        return 2
+    } else if seconds < 16 * 3600 {
+        return 3
+    } else if seconds < 19 * 3600 {
+        return 4
+    }
+    return 5
+}
+
+func GetHour(seconds int) int {
+    return seconds / 3600
+}
+
 func HashCode(x int32, y int32) int32 {
 	x = bijection(x)
 	y = bijection(y)
