@@ -13,5 +13,8 @@
 # data
 data/
 
+# test
+test/
+
 # config
 config.json

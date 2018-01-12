@@ -78,18 +78,18 @@ func main() {
 		log.Fatal(err)
 	}
 	stateWriter := csv.NewWriter(stateFile)
-	stateColumns := []string{"State", "AVO"}
+	stateColumns := []string{"State", "AVO", "PMT", "VMT"}
 	stateWriter.Write(stateColumns)
-	var stateRow [2]string
+	var stateRow [4]string
 
 	countyFile, err := os.Create("../data/county_avos.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
 	countyWriter := csv.NewWriter(countyFile)
-	countyColumns := []string{"County", "AVO"}
+	countyColumns := []string{"County", "AVO", "PMT", "VMT"}
 	countyWriter.Write(countyColumns)
-	var countyRow [2]string
+	var countyRow [4]string
 
 	tripFile, err := os.Create("../data/ataxi_trips.csv")
 	if err != nil {
@@ -124,8 +124,10 @@ func main() {
 		if stateFIPS != curFIPS && i != 0 {
 			stateRow[0] = stateFIPS
 			stateRow[1] = strconv.FormatFloat(statePMT/stateVMT, 'f', 2, 64)
+            stateRow[2] = strconv.FormatFloat(statePMT, 'f', 2, 64)
+            stateRow[3] = strconv.FormatFloat(stateVMT, 'f', 2, 64)
 			stateWriter.Write(stateRow[:])
-			fmt.Printf("state %s avo: %s\n", stateRow[0], stateRow[1])
+			fmt.Printf("state %s avo: %s - pmt: %s - vmt: %s\n", stateRow[0], stateRow[1], stateRow[2], stateRow[3])
 			statePMT = 0
 			stateVMT = 0
 		}
@@ -159,8 +161,10 @@ func main() {
 	    pmt, vmt := getMT(countyTaxis)
 		countyRow[0] = strconv.Itoa(int(countyTaxis[0].OFIPS))
 		countyRow[1] = strconv.FormatFloat(pmt/vmt, 'f', 2, 64)
+        countyRow[2] = strconv.FormatFloat(pmt, 'f', 2, 64)
+        countyRow[3] = strconv.FormatFloat(vmt, 'f', 2, 64)
 		countyWriter.Write(countyRow[:])
-		fmt.Printf("county avo: %s\n", countyRow[1])
+		fmt.Printf("county avo: %s - pmt: %s - vmt: %s\n", countyRow[1], countyRow[2], countyRow[3])
 
 		for _, taxi := range countyTaxis {
             tripRow[0] = strconv.Itoa(int(taxi.OX))
@@ -195,6 +199,9 @@ func main() {
 
 	stateRow[0] = stateFIPS
 	stateRow[1] = strconv.FormatFloat(statePMT/stateVMT, 'f', 2, 64)
+    stateRow[2] = strconv.FormatFloat(statePMT, 'f', 2, 64)
+    stateRow[3] = strconv.FormatFloat(stateVMT, 'f', 2, 64)
+    fmt.Printf("state %s avo: %s - pmt: %s - vmt: %s\n", stateRow[0], stateRow[1], stateRow[2], stateRow[3])
 	stateWriter.Write(stateRow[:])
 
 	stateWriter.Flush()
@@ -211,11 +218,14 @@ func main() {
 		log.Fatal(err)
 	}
 	regionWriter := csv.NewWriter(regionFile)
-	regionColumns := []string{"Region", "AVO"}
+	regionColumns := []string{"Region", "AVO", "PMT", "VMT"}
 	regionWriter.Write(regionColumns)
-	regionAVO := strconv.FormatFloat(regionPMT/regionVMT, 'f', 2, 64)
-	regionWriter.Write([]string{"South", regionAVO})
-	fmt.Printf("region avo: %s\n", regionAVO)
+    regionAVO := regionPMT / regionVMT
+	regionAVOString := strconv.FormatFloat(regionAVO, 'f', 2, 64)
+    regionPMTString := strconv.FormatFloat(regionPMT, 'f', 2, 64)
+    regionVMTString := strconv.FormatFloat(regionVMT, 'f', 2, 64)
+	regionWriter.Write([]string{"South", regionAVOString, regionPMTString, regionVMTString})
+	fmt.Printf("region avo: %s - pmt: %s - vmt: %s\n", regionAVOString, regionPMTString, regionVMTString)
 
 	regionWriter.Flush()
 	regionFile.Close()

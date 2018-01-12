@@ -29,14 +29,10 @@ for f in $FULLPATH; do
     fi
     echo "" >> "$f"
 done
-if [ "$PREV" != "$CUR" ]; then
-    regex="${DATADIR}${PREV}_*.csv"
-    newfile="${DATADIR}${PREV}.csv"
-    cat $regex > $newfile
-    rm $regex
-    regex="${DATADIR}${CUR}_*.csv"
-    newfile="${DATADIR}${CUR}.csv"
-    cat $regex > $newfile
-    rm $regex
-fi
+
+regex="${DATADIR}${CUR}_*.csv"
+newfile="${DATADIR}${CUR}.csv"
+cat $regex > $newfile
+rm $regex
+
 printf '%s\n' "Finished processing files in ${DATADIR}"    
