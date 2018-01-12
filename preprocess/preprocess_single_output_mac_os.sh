@@ -14,7 +14,7 @@ NUM=0
 for f in $FULLPATH; do
     printf '%s\n' $f
     if [ "$NUM" -ne 0 ]; then
-        sed -i 1d "$f"
+        sed -i '' 1d "$f"
     fi
     NUM=$((NUM + 1))
 done
