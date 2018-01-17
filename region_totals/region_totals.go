@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+    "math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -28,7 +29,9 @@ func main() {
 	}
 
 	regionTotals := make(map[int]int)
-	start := time.Now()
+    const mileBuckets = 401
+    var tripLengthCumulative [mileBuckets]int
+    start := time.Now()
 	for _, file := range files {
 		_, filename := filepath.Split(file)
 		fmt.Printf("Processing %s\n", filename)
@@ -47,6 +50,11 @@ func main() {
 			row := ataxi.ParseLine(line)
 			tripDistance := ataxi.GetTripDistance(geo.NewPoint(row.OLat, row.OLon),
 				geo.NewPoint(row.DLat, row.DLon))
+            lengthIdx := int(math.Floor(tripDistance))
+            if lengthIdx >= mileBuckets-1 {
+                lengthIdx = mileBuckets-1
+            }
+            tripLengthCumulative[lengthIdx]++
 			tripCategory := ataxi.GetTripCategory(tripDistance)
 			regionTotals[int(tripCategory)]++
 		}
@@ -54,22 +62,47 @@ func main() {
 	elapsed := time.Since(start)
 	fmt.Printf("csv processing took %s\n", elapsed)
 	fmt.Println("Creating region_totals.csv")
-	file, err := os.Create("../data/region_totals.csv")
+	regionFile, err := os.Create("../data/region_totals.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
+	defer regionFile.Close()
 
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
+	regionWriter := csv.NewWriter(regionFile)
+	defer regionWriter.Flush()
 
 	columns := []string{"WalkTrips", "ShortTrips", "NormalTrips", "LongTrips", "ReallyLongTrips"}
-	writer.Write(columns)
+	regionWriter.Write(columns)
 
 	var row []string
 	for c := 0; c < 5; c++ {
 		row = append(row, strconv.Itoa(regionTotals[c]))
 	}
-	writer.Write(row)
+	regionWriter.Write(row)
 	fmt.Println("Finished")
+
+    for i := 0; i < len(tripLengthCumulative); i++ {
+        if i != 0 {
+            tripLengthCumulative[i] += tripLengthCumulative[i-1]
+        }
+    }
+    fmt.Println("Creating trip_length_cumulative.csv")
+    tripLengthFile, err := os.Create("../data/trip_length_cumulative.csv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer tripLengthFile.Close()
+
+    tripLengthWriter := csv.NewWriter(tripLengthFile)
+    defer tripLengthWriter.Flush()
+
+    columns = []string{"mile", "cumulative"}
+    tripLengthWriter.Write(columns)
+
+    for mile, count := range tripLengthCumulative {
+        row[0] = strconv.Itoa(mile)
+        row[1] = strconv.Itoa(count)
+        tripLengthWriter.Write(row[:2])
+    }
+    fmt.Println("Finished")
 }
