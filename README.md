@@ -36,28 +36,46 @@ data/
 config.json
 ```
 
-This directory should contain your csv files (in particular [NationWide Trip Files](http://orf467.princeton.edu/NationWideTrips'18Kyle/)).
+This directory should contain your csv files (in particular [NationWide Modal Person Trip Files](http://orf467.princeton.edu/NationWideModalPersonTrips18Kyle/aTaxi/)).
 
 To populate the MySQL database, run the following commands in terminal:
-```bash
-cd deploy/
-go run db_populate.go [csv_file_name]
+```
+$ cd deploy/
+$ go run db_populate.go [csv_file_name]
 ```
 
 ### Dependencies
 Run the following commands in terminal to install Go dependencies:
-```bash
-go get github.com/gorilla/handlers
-go get github.com/gorilla/mux
-go get github.com/go-sql-driver/mysql
-go get github.com/jinzhu/gorm
-go get github.com/kellydunn/golang-geo
+```
+$ go get github.com/gorilla/handlers
+$ go get github.com/gorilla/mux
+$ go get github.com/go-sql-driver/mysql
+$ go get github.com/jinzhu/gorm
+$ go get github.com/kellydunn/golang-geo
 ```
 
-## Start server
+### Analysis
+For quick generation of region analysis csv files, first run the region avo script:
+```
+$ cd avo/
+$ go run region_avo.go path/to/modal-person-trip-files
+```
+This generates the `ataxi_trips.csv` file. Run the rest of the analysis scripts in the following directories:
+```
+cumulative/
+region_totals/
+supplydemand/
+```
+i.e.
+```
+$ cd supplydemand
+$ go run supply_demand.go path/to/ataxi_trips.csv
+```
+
+## Server
 ```bash
-cd app/
-go run *.go
+$ cd app/
+$ go run *.go
 ```
 Server will be listening at localhost:8080.
 
